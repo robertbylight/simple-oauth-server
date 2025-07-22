@@ -13,17 +13,11 @@
 **Action Steps:**
 - Review OAuth documentation and existing resources like SuperTokens.
 - Outline the authentication flow, including login, token generation, and session management.
-- Decide on which external OAuth providers (e.g., Google, Apple) to integrate.
 
 ## Implement User
 **Objective:** Set up user
 - Implement User model and any relational setup needed
 - Document user model structure on github
-
-## Integrate login.gov
-**Objective:** Set up login.gov with oauth app
-- Integrate OAuth app with login.gov
-- Document the integration process and usage on GitHub.
 
 ## Implement OAuth Interface
 **Objective:** Start coding the OAuth interface in the Rails application.

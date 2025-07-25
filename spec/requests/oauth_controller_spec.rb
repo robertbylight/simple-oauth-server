@@ -14,6 +14,10 @@ RSpec.describe Oauth::OauthController, type: :request do
     get oauth_authorize_path, params: params
   end
 
+  def expect_bad_request(response)
+    expect(response).to have_http_status(:bad_request)
+  end
+
   describe 'GET /oauth/authorize' do
     context 'when request is valid' do
       it 'returns a redirect_url with the correct parameters' do
@@ -42,7 +46,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             response_type: 'code',
             redirect_uri: valid_client.redirect_uri
           )
-          expect(response).to have_http_status(:bad_request)
+          expect_bad_request(response)
           expect(JSON.parse(response.body)['error_description']).to eq('Missing client_id')
         end
       end
@@ -54,7 +58,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             response_type: 'code',
             redirect_uri: valid_client.redirect_uri
           )
-          expect(response).to have_http_status(:bad_request)
+          expect_bad_request(response)
           expect(JSON.parse(response.body)['error_description']).to eq('Invalid client_id')
         end
       end
@@ -66,7 +70,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             response_type: 'nope',
             redirect_uri: valid_client.redirect_uri
           )
-          expect(response).to have_http_status(:bad_request)
+          expect_bad_request(response)
           expect(JSON.parse(response.body)['error_description']).to eq('response_type must be code')
         end
       end
@@ -77,7 +81,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             client_id: valid_client.client_id,
             response_type: 'code'
           )
-          expect(response).to have_http_status(:bad_request)
+          expect_bad_request(response)
           expect(JSON.parse(response.body)['error_description']).to eq('Missing redirect_uri')
         end
       end
@@ -89,7 +93,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             response_type: 'code',
             redirect_uri: 'http://www.robert.com/callback'
           )
-          expect(response).to have_http_status(:bad_request)
+          expect_bad_request(response)
           expect(JSON.parse(response.body)['error_description']).to eq('Invalid redirect_uri')
         end
       end

@@ -1,4 +1,7 @@
 class OauthClient < ApplicationRecord
+  has_many :oauth_authorizations, dependent: :destroy
+  has_many :users, through: :oauth_authorizations
+
   validates :client_id, presence: true, uniqueness: true
   validates :client_name, presence: true
   validates :redirect_uri, presence: true
@@ -7,7 +10,7 @@ class OauthClient < ApplicationRecord
     redirect_uri == uri
   end
 
-  def create_authorization_code!(redirect_uri)
+  def create_authorization_code!(redirect_uri, user)
     code = SecureRandom.hex(32)
 
     Redis.current.setex(
@@ -15,6 +18,7 @@ class OauthClient < ApplicationRecord
       600,
       {
         client_id: client_id,
+        user_id: user.id,
         redirect_uri: redirect_uri,
         created_at: Time.current.iso8601
       }.to_json

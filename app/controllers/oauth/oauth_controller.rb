@@ -19,7 +19,18 @@ module Oauth
         return
       end
 
-      auth_code = @oauth_client.create_authorization_code!(params[:redirect_uri])
+      if params[:user_id].blank?
+        render json: { error: "invalid_request", error_description: "Missing user_id" }, status: :bad_request
+        return
+      end
+
+      current_user = User.find(params[:user_id])
+
+      unless current_user.is_client_authorized(@oauth_client)
+        current_user.give_authorization_to_client(@oauth_client)
+      end
+
+      auth_code = @oauth_client.create_authorization_code!(params[:redirect_uri], current_user)
       redirect_url = build_redirect_url(params[:redirect_uri], { code: auth_code })
       render json: { redirect_url: redirect_url }
     end

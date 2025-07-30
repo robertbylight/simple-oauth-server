@@ -10,6 +10,14 @@ RSpec.describe Oauth::OauthController, type: :request do
         )
       }
 
+  let(:user) {
+    User.create(
+      email: 'robert@gmail.com',
+      first_name: 'robert',
+      last_name: 'rodriguez'
+    )
+  }
+
   def make_request(params)
     get oauth_authorize_path, params: params
   end
@@ -23,6 +31,7 @@ RSpec.describe Oauth::OauthController, type: :request do
       it 'returns a redirect_url with the correct parameters' do
         make_request(
           client_id: valid_client.client_id,
+          user_id: user.id,
           response_type: 'code',
           redirect_uri: valid_client.redirect_uri
         )
@@ -55,6 +64,7 @@ RSpec.describe Oauth::OauthController, type: :request do
         it 'returns a bad request with invalid client_id message' do
           make_request(
             client_id: 'invalid_client',
+            user_id: user.id,
             response_type: 'code',
             redirect_uri: valid_client.redirect_uri
           )
@@ -67,6 +77,7 @@ RSpec.describe Oauth::OauthController, type: :request do
         it 'returns a bad request with invalid response_type message' do
           make_request(
             client_id: valid_client.client_id,
+            user_id: user.id,
             response_type: 'nope',
             redirect_uri: valid_client.redirect_uri
           )
@@ -79,6 +90,7 @@ RSpec.describe Oauth::OauthController, type: :request do
         it 'returns a bad request with missing redirect_uri message' do
           make_request(
             client_id: valid_client.client_id,
+            user_id: user.id,
             response_type: 'code'
           )
           expect_bad_request(response)
@@ -90,6 +102,7 @@ RSpec.describe Oauth::OauthController, type: :request do
         it 'returns a bad request with invalid redirect_uri message' do
           make_request(
             client_id: valid_client.client_id,
+            user_id: user.id,
             response_type: 'code',
             redirect_uri: 'http://www.robert.com/callback'
           )

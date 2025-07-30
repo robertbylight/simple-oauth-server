@@ -14,8 +14,8 @@ class OauthClient < ApplicationRecord
       "oauth_code:#{code}",
       600,
       {
-        client_id: client_id,
-        redirect_uri: redirect_uri,
+        client_id:,
+        redirect_uri:,
         created_at: Time.current.iso8601
       }.to_json
     )

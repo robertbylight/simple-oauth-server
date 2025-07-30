@@ -22,7 +22,6 @@ module Oauth
       raise ArgumentError, "response_type must be code" if params[:response_type] != "code"
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
       raise ArgumentError, "Invalid redirect_uri" unless oauth_client.redirect_uri == params[:redirect_uri]
-
     end
 
     def oauth_client

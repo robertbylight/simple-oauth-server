@@ -1,47 +1,32 @@
 module Oauth
   class OauthController < ApplicationController
+    attr_accessor :client_id
     skip_before_action :verify_authenticity_token
-    before_action :authenticate_client
 
     def authorize
-      if params[:response_type] != "code"
-        render json: { error: "invalid_request", error_description: "response_type must be code" }, status: :bad_request
-        return
-      end
+      self.client_id = params[:client_id]
+      validate_authorization_request(params)
 
-      if params[:redirect_uri].blank?
-        render json: { error: "invalid_request", error_description: "Missing redirect_uri" }, status: :bad_request
-        return
-      end
-
-      unless @oauth_client.valid_redirect_uri?(params[:redirect_uri])
-        render json: { error: "invalid_request", error_description: "Invalid redirect_uri" }, status: :bad_request
-        return
-      end
-
-      auth_code = @oauth_client.create_authorization_code!(params[:redirect_uri])
-      redirect_url = build_redirect_url(params[:redirect_uri], { code: auth_code })
-      render json: { redirect_url: redirect_url }
+      code = oauth_client.create_authorization_code!(params[:redirect_uri])
+      redirect_url = build_redirect_url(params[:redirect_uri], { code: })
+      render json: { redirect_url: }
+    rescue ArgumentError => e
+      render json: { error: e.message }, status: :bad_request
     end
 
     private
 
-    def authenticate_client
-      client_id = params[:client_id]
+    def validate_authorization_request(params)
+      raise ArgumentError, "Missing client_id" if params[:client_id].blank?
+      raise ArgumentError, "Invalid client_id" if oauth_client.nil?
+      raise ArgumentError, "response_type must be code" if params[:response_type] != "code"
+      raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
+      raise ArgumentError, "Invalid redirect_uri" unless oauth_client.redirect_uri == params[:redirect_uri]
 
-      if client_id.blank?
-        render json: { error: "invalid_request", error_description: "Missing client_id" }, status: :bad_request
-        return false
-      end
+    end
 
-      @oauth_client = OauthClient.find_by(client_id: client_id)
-
-      if @oauth_client.nil?
-        render json: { error: "invalid_client", error_description: "Invalid client_id" }, status: :bad_request
-        return false
-      end
-
-      true
+    def oauth_client
+      @oauth_client ||= OauthClient.find_by(client_id:)
     end
 
     def build_redirect_url(base_uri, params)

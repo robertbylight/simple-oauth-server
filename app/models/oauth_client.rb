@@ -3,10 +3,6 @@ class OauthClient < ApplicationRecord
   validates :client_name, presence: true
   validates :redirect_uri, presence: true
 
-  def valid_redirect_uri?(uri)
-    redirect_uri == uri
-  end
-
   def create_authorization_code!(redirect_uri)
     code = SecureRandom.hex(32)
 

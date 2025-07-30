@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe OauthClient, type: :model do
   def create_oauth_client(client_id, client_name, redirect_uri)
-    OauthClient.new(client_id: client_id, client_name: client_name, redirect_uri: redirect_uri)
+    OauthClient.new(client_id:, client_name:, redirect_uri:)
   end
 
   describe 'Validations' do
@@ -57,18 +57,6 @@ RSpec.describe OauthClient, type: :model do
       code = oauth_client.create_authorization_code!(oauth_client.redirect_uri)
       # regex to match the pattern of the code(64 lowercase alphanumeric characters). does not compare the actual value itself.
       expect(code).to match(/\A[a-f0-9]{64}\z/)
-    end
-  end
-
-    describe 'valid_redirect_uri?' do
-    it 'returns true if the URI matches' do
-      oauth_client = create_oauth_client('123', 'capsule corp', 'http://cc.com/callback')
-      expect(oauth_client.valid_redirect_uri?(oauth_client.redirect_uri)).to be_truthy
-    end
-
-    it 'returns false if the URI does not match' do
-      oauth_client = create_oauth_client('123', 'musrhoom kingdom', 'http://mario.com/callback')
-      expect(oauth_client.valid_redirect_uri?('http://luigi.com/callback')).to be_falsy
     end
   end
 end

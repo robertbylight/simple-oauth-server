@@ -47,7 +47,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             redirect_uri: valid_client.redirect_uri
           )
           expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Missing client_id')
+          expect(JSON.parse(response.body)['error']).to eq('Missing client_id')
         end
       end
 
@@ -59,7 +59,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             redirect_uri: valid_client.redirect_uri
           )
           expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Invalid client_id')
+          expect(JSON.parse(response.body)['error']).to eq('Invalid client_id')
         end
       end
 
@@ -71,7 +71,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             redirect_uri: valid_client.redirect_uri
           )
           expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('response_type must be code')
+          expect(JSON.parse(response.body)['error']).to eq('response_type must be code')
         end
       end
 
@@ -82,7 +82,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             response_type: 'code'
           )
           expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Missing redirect_uri')
+          expect(JSON.parse(response.body)['error']).to eq('Missing redirect_uri')
         end
       end
 
@@ -94,7 +94,7 @@ RSpec.describe Oauth::OauthController, type: :request do
             redirect_uri: 'http://www.robert.com/callback'
           )
           expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Invalid redirect_uri')
+          expect(JSON.parse(response.body)['error']).to eq('Invalid redirect_uri')
         end
       end
     end

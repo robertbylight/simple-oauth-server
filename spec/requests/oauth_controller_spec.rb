@@ -110,6 +110,18 @@ RSpec.describe Oauth::OauthController, type: :request do
           expect(JSON.parse(response.body)['error_description']).to eq('Invalid redirect_uri')
         end
       end
+
+      context 'when user_id is invalid' do
+        it 'returns a not found error' do
+          make_request(
+            client_id: valid_client.client_id,
+            user_id: 777,
+            response_type: 'code',
+            redirect_uri: valid_client.redirect_uri
+          )
+          expect(response).to have_http_status(:not_found)
+        end
+      end
     end
   end
 end

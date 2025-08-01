@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_29_151901) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_01_133455) do
   create_table "oauth_authorizations", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "oauth_client_id", null: false
@@ -28,6 +28,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_29_151901) do
     t.string "redirect_uri", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "client_secret", null: false
     t.index ["client_id"], name: "index_oauth_clients_on_client_id", unique: true
   end
 

@@ -1,4 +1,7 @@
 class OauthClient < ApplicationRecord
+  has_many :oauth_authorizations, dependent: :destroy
+  has_many :users, through: :oauth_authorizations
+
   validates :client_id, presence: true, uniqueness: true
   validates :client_name, presence: true
   validates :redirect_uri, presence: true

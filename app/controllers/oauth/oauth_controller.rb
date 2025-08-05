@@ -7,7 +7,13 @@ module Oauth
       self.client_id = params[:client_id]
       validate_authorization_request(params)
 
-      code = oauth_client.create_authorization_code!(params[:redirect_uri])
+      current_user = User.find(params[:user_id])
+
+      unless current_user.is_client_authorized(oauth_client(params[:client_id]))
+        current_user.give_authorization_to_client(oauth_client(params[:client_id]))
+      end
+
+      code = oauth_client(params[:client_id]).create_authorization_code!(params[:redirect_uri], current_user)
       redirect_url = build_redirect_url(params[:redirect_uri], { code: })
       render json: { redirect_url: }
     rescue ArgumentError => e
@@ -18,7 +24,7 @@ module Oauth
       validate_token_request(params)
 
       auth_code = get_authorization_code(params[:code])
-      access_token = create_access_token(oauth_client, auth_code["user_id"])
+      access_token = create_access_token(oauth_client(params[:client_id]), auth_code["user_id"])
 
       delete_authorization_code(params[:code])
 
@@ -35,10 +41,11 @@ module Oauth
 
     def validate_authorization_request(params)
       raise ArgumentError, "Missing client_id" if params[:client_id].blank?
-      raise ArgumentError, "Invalid client_id" if oauth_client.nil?
+      raise ArgumentError, "Invalid client_id" if oauth_client(params[:client_id]).nil?
       raise ArgumentError, "response_type must be code" if params[:response_type] != "code"
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
-      raise ArgumentError, "Invalid redirect_uri" unless oauth_client.redirect_uri == params[:redirect_uri]
+      raise ArgumentError, "Invalid redirect_uri" unless oauth_client(params[:client_id]).redirect_uri == params[:redirect_uri]
+      raise ArgumentError, "Missing user_id" if params[:user_id].blank?
     end
 
     def validate_token_request(params)
@@ -48,8 +55,8 @@ module Oauth
       raise ArgumentError, "Missing client_id" if params[:client_id].blank?
       raise ArgumentError, "Missing client_secret" if params[:client_secret].blank?
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
-      raise ArgumentError, "Invalid client_id" if oauth_client.nil?
-      raise ArgumentError, "Invalid client_secret" unless oauth_client.client_secret == params[:client_secret]
+      raise ArgumentError, "Invalid client_id" if oauth_client(params[:client_id]).nil?
+      raise ArgumentError, "Invalid client_secret" unless oauth_client(params[:client_id]).client_secret == params[:client_secret]
     end
 
     def get_authorization_code(code)
@@ -58,7 +65,7 @@ module Oauth
 
       auth_code_details = JSON.parse(auth_code)
 
-      raise ArgumentError, "Invalid authorization code" unless auth_code_details["client_id"] == oauth_client.client_id
+      raise ArgumentError, "Invalid authorization code" unless auth_code_details["client_id"] == oauth_client(params[:client_id]).client_id
       raise ArgumentError, "Invalid redirect_uri" unless auth_code_details["redirect_uri"] == params[:redirect_uri]
 
       auth_code_details
@@ -68,8 +75,20 @@ module Oauth
       Redis.current.del("oauth_code:#{code}")
     end
 
-    def oauth_client
-      @oauth_client ||= OauthClient.find_by(client_id:)
+    def create_access_token(oauth_client, user_id)
+      user = User.find(user_id)
+
+      AccessToken.create!(
+        token: AccessToken.generate_token,
+        oauth_client: oauth_client,
+        user: user,
+        expires_at: 1.hour.from_now
+      )
+    end
+
+    def oauth_client(client_id)
+      @oauth_client ||= {}
+      @oauth_client[client_id] ||= OauthClient.find_by(client_id: client_id)
     end
 
     def build_redirect_url(base_uri, params)

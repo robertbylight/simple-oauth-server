@@ -16,6 +16,8 @@ module Oauth
       render json: { redirect_url: }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "User not found" }, status: :not_found
     end
 
     private
@@ -27,7 +29,6 @@ module Oauth
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
       raise ArgumentError, "Invalid redirect_uri" unless oauth_client(params[:client_id]).redirect_uri == params[:redirect_uri]
       raise ArgumentError, "Missing user_id" if params[:user_id].blank?
-      raise ArgumentError, "Invalid user_id" if User.find_by(id: params[:user_id]).nil?
     end
 
     def oauth_client(client_id)

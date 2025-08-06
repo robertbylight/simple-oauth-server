@@ -18,23 +18,26 @@ RSpec.describe Oauth::OauthController, type: :request do
     )
   }
 
-  def make_request(params)
-    get oauth_authorize_path, params: params
-  end
-
-  def expect_bad_request(response)
-    expect(response).to have_http_status(:bad_request)
+  def make_request(client_id: valid_client.client_id, response_type: 'code', redirect_uri: valid_client.redirect_uri, user_id: user.id)
+    get oauth_authorize_path, params: { client_id:, response_type:, redirect_uri:, user_id: }
   end
 
   describe 'GET /oauth/authorize' do
+    shared_examples 'an invalid request' do
+      it 'returns a :bad_request status' do
+        make_request(**request_params)
+        expect(response).to have_http_status(:bad_request)
+      end
+
+      it 'returns a JSON response with the error message' do
+        make_request(**request_params)
+        expect(JSON.parse(response.body)['error']).to eq(error_message)
+      end
+    end
+
     context 'when request is valid' do
       it 'returns a redirect_url with the correct parameters' do
-        make_request(
-          client_id: valid_client.client_id,
-          user_id: user.id,
-          response_type: 'code',
-          redirect_uri: valid_client.redirect_uri
-        )
+        make_request
         json = JSON.parse(response.body)
         expect(json).to have_key('redirect_url')
 
@@ -50,65 +53,33 @@ RSpec.describe Oauth::OauthController, type: :request do
 
     context 'when request is invalid' do
       context 'when client_id is missing' do
-        it 'returns a bad request with missing client_id message' do
-          make_request(
-            response_type: 'code',
-            redirect_uri: valid_client.redirect_uri
-          )
-          expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Missing client_id')
-        end
+        let(:request_params) { { client_id: nil } }
+        let(:error_message) { 'Missing client_id' }
+        it_behaves_like 'an invalid request'
       end
 
       context 'when client_id is invalid' do
-        it 'returns a bad request with invalid client_id message' do
-          make_request(
-            client_id: 'invalid_client',
-            user_id: user.id,
-            response_type: 'code',
-            redirect_uri: valid_client.redirect_uri
-          )
-          expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Invalid client_id')
-        end
+        let(:request_params) { { client_id: 'invalid_client' } }
+        let(:error_message) { 'Invalid client_id' }
+        it_behaves_like 'an invalid request'
       end
 
       context 'when response_type is not "code"' do
-        it 'returns a bad request with invalid response_type message' do
-          make_request(
-            client_id: valid_client.client_id,
-            user_id: user.id,
-            response_type: 'nope',
-            redirect_uri: valid_client.redirect_uri
-          )
-          expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('response_type must be code')
-        end
+        let(:request_params) { { response_type: 'nope' } }
+        let(:error_message) { 'response_type must be code' }
+        it_behaves_like 'an invalid request'
       end
 
       context 'when redirect_uri is missing' do
-        it 'returns a bad request with missing redirect_uri message' do
-          make_request(
-            client_id: valid_client.client_id,
-            user_id: user.id,
-            response_type: 'code'
-          )
-          expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Missing redirect_uri')
-        end
+        let(:request_params) { { redirect_uri: nil } }
+        let(:error_message) { 'Missing redirect_uri' }
+        it_behaves_like 'an invalid request'
       end
 
       context 'when redirect_uri is invalid' do
-        it 'returns a bad request with invalid redirect_uri message' do
-          make_request(
-            client_id: valid_client.client_id,
-            user_id: user.id,
-            response_type: 'code',
-            redirect_uri: 'http://www.robert.com/callback'
-          )
-          expect_bad_request(response)
-          expect(JSON.parse(response.body)['error_description']).to eq('Invalid redirect_uri')
-        end
+        let(:request_params) { { redirect_uri: 'http://www.robert.com/callback' } }
+        let(:error_message) { 'Invalid redirect_uri' }
+        it_behaves_like 'an invalid request'
       end
 
       context 'when user_id is invalid' do

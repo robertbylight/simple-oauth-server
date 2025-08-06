@@ -1,10 +1,8 @@
 module Oauth
   class OauthController < ApplicationController
-    attr_accessor :client_id
     skip_before_action :verify_authenticity_token
 
     def authorize
-      self.client_id = params[:client_id]
       validate_authorization_request(params)
 
       current_user = User.find(params[:user_id])

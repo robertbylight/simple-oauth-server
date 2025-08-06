@@ -1,25 +1,24 @@
 require 'rails_helper'
 
-
 RSpec.describe Oauth::OauthController, type: :request do
   let(:valid_client) {
     OauthClient.create(
-          client_id: '123',
-          client_name: 'Rubber Toes',
-          redirect_uri: 'https://www.robert.com/callback'
-        )
-      }
+      client_id: '123',
+      client_name: 'Rubber Toes',
+      redirect_uri: 'https://www.robert.com/callback',
+    )
+  }
 
-  let(:user) {
-    User.create(
+  let(:valid_user) {
+    User.create!(
       email: 'robert@gmail.com',
       first_name: 'robert',
       last_name: 'rodriguez'
     )
   }
 
-  def make_request(client_id: valid_client.client_id, response_type: 'code', redirect_uri: valid_client.redirect_uri, user_id: user.id)
-    get oauth_authorize_path, params: { client_id:, response_type:, redirect_uri:, user_id: }
+  def make_request(client_id: valid_client.client_id, response_type: 'code', redirect_uri: valid_client.redirect_uri, user_id: valid_user.id)
+    get oauth_authorize_path, params: { client_id: client_id, response_type: response_type, redirect_uri: redirect_uri, user_id: user_id }
   end
 
   describe 'GET /oauth/authorize' do
@@ -82,14 +81,15 @@ RSpec.describe Oauth::OauthController, type: :request do
         it_behaves_like 'an invalid request'
       end
 
+      context 'when user_id is missing' do
+        let(:request_params) { { user_id: nil } }
+        let(:error_message) { 'Missing user_id' }
+        it_behaves_like 'an invalid request'
+      end
+
       context 'when user_id is invalid' do
         it 'returns a not found error' do
-          make_request(
-            client_id: valid_client.client_id,
-            user_id: 777,
-            response_type: 'code',
-            redirect_uri: valid_client.redirect_uri
-          )
+          make_request(user_id: 777)
           expect(response).to have_http_status(:not_found)
         end
       end

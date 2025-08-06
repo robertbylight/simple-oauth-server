@@ -8,6 +8,6 @@ class CreateOauthAuthorizations < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :oauth_authorizations, [:user_id, :oauth_client_id], unique: true
+    add_index :oauth_authorizations, [ :user_id, :oauth_client_id ], unique: true
   end
 end

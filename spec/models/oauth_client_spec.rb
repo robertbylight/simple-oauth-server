@@ -10,6 +10,8 @@ RSpec.describe OauthClient, type: :model do
     OauthClient.new(client_id:, client_name:, redirect_uri:)
   end
 
+  let(:user) { User.create!(email: 'robert@gmail.com', first_name: 'robert', last_name: 'rodriguez') }
+
   describe 'Validations' do
     context 'when attributes are valid' do
       it 'creates a valid oauth client' do
@@ -66,7 +68,7 @@ RSpec.describe OauthClient, type: :model do
     let(:redirect_uri) { 'http://thematrix.com/callback' }
 
     it 'creates a valid authorization code' do
-      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri)
+      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user)
       # regex to match the pattern of the code(64 lowercase alphanumeric characters). does not compare the actual value itself.
       expect(code).to match(/\A[a-f0-9]{64}\z/)
     end

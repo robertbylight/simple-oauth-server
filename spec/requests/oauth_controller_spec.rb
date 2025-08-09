@@ -2,10 +2,11 @@ require 'rails_helper'
 
 RSpec.describe Oauth::OauthController, type: :request do
   let(:valid_client) {
-    OauthClient.create(
+    OauthClient.create!(
       client_id: '123',
       client_name: 'Rubber Toes',
       redirect_uri: 'https://www.robert.com/callback',
+      client_secret: 'test_secret'
     )
   }
 

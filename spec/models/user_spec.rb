@@ -72,6 +72,14 @@ RSpec.describe User, type: :model do
 
   describe 'is_client_authorized' do
     let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
+    let(:oauth_client) {
+      OauthClient.create!(
+        client_id: '123',
+        client_name: 'Test App',
+        redirect_uri: 'https://example.com/callback',
+        client_secret: 'test_secret'
+      )
+    }
 
     context 'when user has authorized the client' do
       it 'returns true' do
@@ -89,6 +97,14 @@ RSpec.describe User, type: :model do
 
   describe 'give_authorization_to_client' do
     let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
+    let(:oauth_client) {
+      OauthClient.create!(
+        client_id: '123',
+        client_name: 'Test App',
+        redirect_uri: 'https://example.com/callback',
+        client_secret: 'test_secret'
+      )
+    }
 
     it 'creates an authorization record' do
       expect {
@@ -119,8 +135,22 @@ RSpec.describe User, type: :model do
 
   describe 'associations' do
     let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
-    let(:oauth_client1) { OauthClient.create!(client_id: '123', client_name: 'App 1', redirect_uri: 'https://app1.com/callback') }
-    let(:oauth_client2) { OauthClient.create!(client_id: '456', client_name: 'App 2', redirect_uri: 'https://app2.com/callback') }
+    let(:oauth_client1) {
+      OauthClient.create!(
+        client_id: '123',
+        client_name: 'App 1',
+        redirect_uri: 'https://app1.com/callback',
+        client_secret: 'test_secret_1'
+      )
+    }
+    let(:oauth_client2) {
+      OauthClient.create!(
+        client_id: '456',
+        client_name: 'App 2',
+        redirect_uri: 'https://app2.com/callback',
+        client_secret: 'test_secret_2'
+      )
+    }
 
     before do
       user.give_authorization_to_client(oauth_client1)

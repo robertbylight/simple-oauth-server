@@ -4,10 +4,11 @@ RSpec.describe OauthClient, type: :model do
   let(:client_id) { '123' }
   let(:client_name) { 'robert' }
   let(:redirect_uri) { 'http://robert.com/callback' }
-  let(:oauth_client) { create_oauth_client(client_id, client_name, redirect_uri) }
+  let(:client_secret) { 'abc123' }
+  let(:oauth_client) { create_oauth_client(client_id, client_name, redirect_uri, client_secret) }
 
-  def create_oauth_client(client_id, client_name, redirect_uri)
-    OauthClient.new(client_id:, client_name:, redirect_uri:)
+  def create_oauth_client(client_id, client_name, redirect_uri, client_secret)
+    OauthClient.new(client_id:, client_name:, redirect_uri:, client_secret:)
   end
 
   let(:user) { User.create!(email: 'robert@gmail.com', first_name: 'robert', last_name: 'rodriguez') }
@@ -47,13 +48,27 @@ RSpec.describe OauthClient, type: :model do
         end
       end
 
+      context 'when client_secret is missing' do
+        let(:client_secret) { nil }
+
+        it 'is invalid' do
+          expect(oauth_client.valid?).to be_falsy
+          expect(oauth_client.errors[:client_secret]).to include("can't be blank")
+        end
+      end
+
       context 'when client_id has already been used' do
         let(:client_id) { 'abc' }
         let(:client_name) { 'obi wan systems' }
         let(:redirect_uri) { 'http://obiwansys.com/callback' }
 
         before do
-          OauthClient.create(client_id: 'abc', client_name: 'obi wan systems', redirect_uri: 'http://obiwansys.com/callback')
+          OauthClient.create!(
+            client_id: 'abc',
+            client_name: 'obi wan systems',
+            redirect_uri: 'http://obiwansys.com/callback',
+            client_secret: 'obiwan_secret'
+          )
         end
         it 'is invalid' do
           expect(oauth_client.valid?).to be_falsy
@@ -71,6 +86,16 @@ RSpec.describe OauthClient, type: :model do
       code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user)
       # regex to match the pattern of the code(64 lowercase alphanumeric characters). does not compare the actual value itself.
       expect(code).to match(/\A[a-f0-9]{64}\z/)
+    end
+
+    it 'stores code in Redis with correct client id, redirect uri, and user id' do
+      oauth_client.save!
+      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user)
+
+      code_details = JSON.parse(Redis.current.get("oauth_code:#{code}"))
+      expect(code_details['client_id']).to eq(oauth_client.client_id)
+      expect(code_details['user_id']).to eq(user.id)
+      expect(code_details['redirect_uri']).to eq(oauth_client.redirect_uri)
     end
   end
 end

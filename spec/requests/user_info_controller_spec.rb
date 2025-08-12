@@ -26,6 +26,14 @@ RSpec.describe Oauth::UserInfoController, type: :request do
       expires_at: 1.hour.from_now
     )
   }
+  let(:expired_access_token) {
+    AccessToken.create!(
+      token: "exp123",
+      oauth_client: valid_client,
+      user: valid_user,
+      expires_at: 1.hour.ago
+    )
+  }
 
   def make_request(token: valid_access_token.token)
     headers = {}

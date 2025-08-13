@@ -8,8 +8,16 @@ module Oauth
       consent_info = {
         client_name: oauth_client(state_data["client_id"]).client_name,
         user_name: "#{user(state_data["user_id"]).first_name} #{user(state_data["user_id"]).last_name}",
-        requested_permissions: [ "Read your profile information", "Access your email address" ],
-        state: params[:state]
+        requested_permissions: [ "First name", "Last name", "Access your email address" ],
+        state: params[:state],
+        decision_options: {
+          allow: {
+            body: { state: params[:state], decision: "allow" }
+          },
+          deny: {
+            body: { state: params[:state], decision: "deny" }
+          }
+        }
       }
 
       render json: { consent_info: consent_info }
@@ -19,6 +27,13 @@ module Oauth
 
     def create
       state_data = get_state_data(params[:state])
+
+      validate_user_decision(params[:decision])
+
+      if params[:decision] == "deny"
+        handle_access_denied(state_data)
+        return
+      end
 
       oauth_client = oauth_client(state_data["client_id"])
       user_details = user(state_data["user_id"])
@@ -42,6 +57,22 @@ module Oauth
     end
 
     private
+
+    def validate_user_decision(decision)
+      raise ArgumentError, "Missing decision parameter" if decision.blank?
+      raise ArgumentError, "Invalid decision" unless %w[allow deny].include?(decision)
+    end
+
+    def handle_access_denied(state_data)
+      Redis.current.del("oauth_state:#{params[:state]}")
+
+      error_redirect = build_redirect_url(state_data["redirect_uri"], {
+        error: "access_denied",
+        error_description: "User denied authorization"
+      })
+
+      render json: { redirect_url: error_redirect }
+    end
 
     def get_state_data(state_token)
       raise ArgumentError, "Missing state parameter" if state_token.blank?

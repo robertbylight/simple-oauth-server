@@ -7,6 +7,7 @@ class OauthClient < ApplicationRecord
   validates :redirect_uri, presence: true
 
   def create_authorization_code!(redirect_uri, user)
+    user.give_authorization_to_client(self) unless user.is_client_authorized(self)
     code = SecureRandom.hex(32)
 
     Redis.current.setex(

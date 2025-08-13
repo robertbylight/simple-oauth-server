@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   namespace :oauth do
     get "authorize", to: "oauth#authorize"
+    post "token", to: "oauth#token"
+    get "authorization-grants/new", to: "authorization_grants#new"
+    post "authorization-grants", to: "authorization_grants#create"
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

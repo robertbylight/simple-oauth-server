@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :oauth_authorizations, dependent: :destroy
   has_many :oauth_clients, through: :oauth_authorizations
+  has_many :access_tokens, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :first_name, presence: true

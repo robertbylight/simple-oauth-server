@@ -5,6 +5,7 @@ class OauthClient < ApplicationRecord
   validates :client_id, presence: true, uniqueness: true
   validates :client_name, presence: true
   validates :redirect_uri, presence: true
+  validates :client_secret, presence: true
 
   def create_authorization_code!(redirect_uri, user)
     user.give_authorization_to_client(self) unless user.is_client_authorized(self)

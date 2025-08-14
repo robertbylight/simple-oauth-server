@@ -6,11 +6,6 @@ module Oauth
       validate_authorization_request(params)
 
       current_user = User.find(params[:user_id])
-
-      unless current_user.is_client_authorized(oauth_client(params[:client_id]))
-        current_user.give_authorization_to_client(oauth_client(params[:client_id]))
-      end
-
       code = oauth_client(params[:client_id]).create_authorization_code!(params[:redirect_uri], current_user)
       redirect_url = build_redirect_url(params[:redirect_uri], { code: })
       render json: { redirect_url: }
@@ -33,6 +28,8 @@ module Oauth
       }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "User not found" }, status: :not_found
     end
 
     private

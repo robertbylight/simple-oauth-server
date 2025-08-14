@@ -5,11 +5,14 @@ module Oauth
     def authorize
       validate_authorization_request(params)
 
-      code = oauth_client(params[:client_id]).create_authorization_code!(params[:redirect_uri])
+      current_user = User.find(params[:user_id])
+      code = oauth_client(params[:client_id]).create_authorization_code!(params[:redirect_uri], current_user)
       redirect_url = build_redirect_url(params[:redirect_uri], { code: })
       render json: { redirect_url: }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "User not found" }, status: :not_found
     end
 
     private
@@ -20,6 +23,7 @@ module Oauth
       raise ArgumentError, "response_type must be code" if params[:response_type] != "code"
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
       raise ArgumentError, "Invalid redirect_uri" unless oauth_client(params[:client_id]).redirect_uri == params[:redirect_uri]
+      raise ArgumentError, "Missing user_id" if params[:user_id].blank?
     end
 
     def oauth_client(client_id)

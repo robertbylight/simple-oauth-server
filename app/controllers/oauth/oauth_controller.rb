@@ -16,15 +16,17 @@ module Oauth
     def token
       validate_token_request(params)
 
-      auth_code = get_authorization_code(params[:code])
-      access_token = create_access_token(oauth_client(params[:client_id]), auth_code["user_id"])
-
-      delete_authorization_code(params[:code])
+      begin
+        auth_code = get_authorization_code(params[:code])
+        access_token = create_access_token(oauth_client(params[:client_id]), auth_code["user_id"])
+      ensure
+        delete_authorization_code(params[:code])
+      end
 
       render json: {
         access_token: access_token.token,
         token_type: "Bearer",
-        expires_in: 3600
+        expires_in: access_token.expires_in
       }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
@@ -75,15 +77,15 @@ module Oauth
 
       AccessToken.create!(
         token: AccessToken.generate_token,
-        oauth_client: oauth_client,
-        user: user,
+        oauth_client:,
+        user:,
         expires_at: 1.hour.from_now
       )
     end
 
     def oauth_client(client_id)
       @oauth_client ||= {}
-      @oauth_client[client_id] ||= OauthClient.find_by(client_id: client_id)
+      @oauth_client[client_id] ||= OauthClient.find_by(client_id:)
     end
 
     def build_redirect_url(base_uri, params)

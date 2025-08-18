@@ -5,7 +5,7 @@ class AccessToken < ApplicationRecord
   validates :token, presence: true, uniqueness: true
   validates :expires_at, presence: true
 
-  def expired
+  def expired?
     expires_at < Time.current
   end
 

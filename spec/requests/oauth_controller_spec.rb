@@ -17,24 +17,21 @@ RSpec.describe Oauth::OauthController, type: :request do
     )
   }
 
-  let(:code_challenge) { 'abc123' }
-  let(:code_challenge_method) { 'S256' }
-
   def make_request(
     client_id: valid_client.client_id,
     response_type: 'code',
     redirect_uri: valid_client.redirect_uri,
     user_id: valid_user.id,
-    code_challenge: 'abc123',
+    code_challenge: '6iEWvY6Bhyf7cFsAf84zjbeAHO0y0a4QyZqaddmMclw',
     code_challenge_method: 'S256'
   )
     get oauth_authorize_path, params: {
-      client_id: client_id,
-      response_type: response_type,
-      redirect_uri: redirect_uri,
-      user_id: user_id,
-      code_challenge: code_challenge,
-      code_challenge_method: code_challenge_method
+      client_id:,
+      response_type:,
+      redirect_uri:,
+      user_id:,
+      code_challenge:,
+      code_challenge_method:
     }
   end
 

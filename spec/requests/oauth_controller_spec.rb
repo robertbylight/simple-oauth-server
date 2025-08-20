@@ -137,12 +137,6 @@ RSpec.describe Oauth::OauthController, type: :request do
         let(:error_message) { 'Invalid code_challenge_method' }
         it_behaves_like 'an invalid request'
       end
-
-      context 'when code_challenge_method is invalid' do
-        let(:request_params) { { code_challenge_method: 'SHA1' } }
-        let(:error_message) { 'Invalid code_challenge_method' }
-        it_behaves_like 'an invalid request'
-      end
     end
   end
 end

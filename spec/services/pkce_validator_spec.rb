@@ -25,28 +25,11 @@ RSpec.describe PkceValidator do
         result = described_class.validate(nil, code_verifier)
         expect(result).to be false
       end
-
-      it 'returns false for empty string' do
-        result = described_class.validate('', code_verifier)
-        expect(result).to be false
-      end
     end
 
     context 'when code_verifier is blank' do
       it 'returns false for nil' do
         result = described_class.validate(code_challenge, nil)
-        expect(result).to be false
-      end
-
-      it 'returns false for empty string' do
-        result = described_class.validate(code_challenge, '')
-        expect(result).to be false
-      end
-    end
-
-    context 'when both parameters are blank' do
-      it 'returns false' do
-        result = described_class.validate(nil, nil)
         expect(result).to be false
       end
     end

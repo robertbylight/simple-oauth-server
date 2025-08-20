@@ -43,15 +43,6 @@ RSpec.describe OauthClient, type: :model do
         end
       end
 
-      context 'when client_secret is missing' do
-        let(:client_secret) { nil }
-
-        it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
-          expect(oauth_client.errors[:client_secret]).to include("can't be blank")
-        end
-      end
-
       context 'when client_id has already been used' do
         let(:client_id) { 'abc' }
         let(:client_name) { 'obi wan systems' }
@@ -62,7 +53,6 @@ RSpec.describe OauthClient, type: :model do
             client_id: 'abc',
             client_name: 'obi wan systems',
             redirect_uri: 'http://obiwansys.com/callback',
-            client_secret: 'obiwan_secret'
           )
         end
 

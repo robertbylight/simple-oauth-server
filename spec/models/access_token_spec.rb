@@ -8,7 +8,6 @@ RSpec.describe AccessToken, type: :model do
       client_id: '123',
       client_name: 'robert',
       redirect_uri: 'http://robert.com/callback',
-      client_secret: 'safe'
     )
   }
   let(:user) { User.create!(email: 'robert@gmail.com', first_name: 'robert', last_name: 'rodriguez') }

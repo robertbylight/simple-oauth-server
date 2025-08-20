@@ -6,7 +6,11 @@ module Oauth
       validate_authorization_request(params)
 
       current_user = User.find(params[:user_id])
-      code = oauth_client(params[:client_id]).create_authorization_code!(params[:redirect_uri], current_user)
+      code = oauth_client(params[:client_id]).create_authorization_code!(
+        params[:redirect_uri],
+        current_user,
+        params[:code_challenge]
+      )
       redirect_url = build_redirect_url(params[:redirect_uri], { code: })
       render json: { redirect_url: }
     rescue ArgumentError => e
@@ -24,6 +28,9 @@ module Oauth
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
       raise ArgumentError, "Invalid redirect_uri" unless oauth_client(params[:client_id]).redirect_uri == params[:redirect_uri]
       raise ArgumentError, "Missing user_id" if params[:user_id].blank?
+      raise ArgumentError, "Missing code_challenge" if params[:code_challenge].blank?
+      raise ArgumentError, "Missing code_challenge_method" if params[:code_challenge_method].blank?
+      raise ArgumentError, "Invalid code_challenge_method" unless params[:code_challenge_method] == "S256"
     end
 
     def oauth_client(client_id)

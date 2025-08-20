@@ -6,7 +6,7 @@ class OauthClient < ApplicationRecord
   validates :client_name, presence: true
   validates :redirect_uri, presence: true
 
-  def create_authorization_code!(redirect_uri, user)
+  def create_authorization_code!(redirect_uri, user, code_challenge)
     user.give_authorization_to_client(self) unless user.is_client_authorized(self)
     code = SecureRandom.hex(32)
 
@@ -17,6 +17,7 @@ class OauthClient < ApplicationRecord
         client_id:,
         user_id: user.id,
         redirect_uri:,
+        code_challenge:,
         created_at: Time.current.iso8601
       }.to_json
     )

@@ -57,10 +57,8 @@ module Oauth
       raise ArgumentError, "grant_type must be authorization_code" unless params[:grant_type] == "authorization_code"
       raise ArgumentError, "Missing code" if params[:code].blank?
       raise ArgumentError, "Missing client_id" if params[:client_id].blank?
-      raise ArgumentError, "Missing client_secret" if params[:client_secret].blank?
       raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
       raise ArgumentError, "Invalid client_id" if oauth_client(params[:client_id]).nil?
-      raise ArgumentError, "Invalid client_secret" unless oauth_client(params[:client_id]).client_secret == params[:client_secret]
     end
 
     def get_authorization_code(code)

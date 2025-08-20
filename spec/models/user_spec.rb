@@ -73,7 +73,6 @@ RSpec.describe User, type: :model do
         client_id: '123',
         client_name: 'Test App',
         redirect_uri: 'https://example.com/callback',
-        client_secret: 'test_secret'
       )
     }
 
@@ -98,7 +97,6 @@ RSpec.describe User, type: :model do
         client_id: '123',
         client_name: 'Test App',
         redirect_uri: 'https://example.com/callback',
-        client_secret: 'test_secret'
       )
     }
 
@@ -131,8 +129,8 @@ RSpec.describe User, type: :model do
 
   describe 'associations' do
     let(:user) { User.create!(email:, first_name:, last_name:) }
-    let(:oauth_client1) { OauthClient.create!(client_id: '123', client_name: 'Client 1', redirect_uri: 'https://client1.com/callback', client_secret: 'test_secret_1') }
-    let(:oauth_client2) { OauthClient.create!(client_id: '456', client_name: 'Client 2', redirect_uri: 'https://client2.com/callback', client_secret: 'test_secret_2') }
+    let(:oauth_client1) { OauthClient.create!(client_id: '123', client_name: 'Client 1', redirect_uri: 'https://client1.com/callback') }
+    let(:oauth_client2) { OauthClient.create!(client_id: '456', client_name: 'Client 2', redirect_uri: 'https://client2.com/callback') }
 
     before do
       user.give_authorization_to_client(oauth_client1)

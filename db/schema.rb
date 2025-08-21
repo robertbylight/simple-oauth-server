@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_29_151901) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_20_155327) do
+  create_table "access_tokens", force: :cascade do |t|
+    t.string "token"
+    t.integer "oauth_client_id", null: false
+    t.integer "user_id", null: false
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["oauth_client_id"], name: "index_access_tokens_on_oauth_client_id"
+    t.index ["token"], name: "index_access_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_access_tokens_on_user_id"
+  end
+
   create_table "oauth_authorizations", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "oauth_client_id", null: false
@@ -40,6 +52,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_29_151901) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "access_tokens", "oauth_clients"
+  add_foreign_key "access_tokens", "users"
   add_foreign_key "oauth_authorizations", "oauth_clients"
   add_foreign_key "oauth_authorizations", "users"
 end

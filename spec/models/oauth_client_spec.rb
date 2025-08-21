@@ -49,7 +49,11 @@ RSpec.describe OauthClient, type: :model do
         let(:redirect_uri) { 'http://obiwansys.com/callback' }
 
         before do
-          OauthClient.create(client_id: 'abc', client_name: 'obi wan systems', redirect_uri: 'http://obiwansys.com/callback')
+          OauthClient.create!(
+            client_id: 'abc',
+            client_name: 'obi wan systems',
+            redirect_uri: 'http://obiwansys.com/callback',
+          )
         end
 
         it 'is invalid' do

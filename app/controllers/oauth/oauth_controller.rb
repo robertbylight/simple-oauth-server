@@ -3,10 +3,10 @@ module Oauth
     skip_before_action :verify_authenticity_token
 
     def authorize
-      validate_authorization_request(params)
+      oauth_client = AuthorizationRequestValidator.new(params).validate
 
       current_user = User.find(params[:user_id])
-      code = oauth_client(params[:client_id]).create_authorization_code!(
+      code = oauth_client.create_authorization_code!(
         params[:redirect_uri],
         current_user,
         params[:code_challenge]
@@ -19,24 +19,32 @@ module Oauth
       render json: { error: "User not found" }, status: :not_found
     end
 
+    def token
+      oauth_client = TokenRequestValidator.new(params).validate
+
+      auth_code_data = AuthorizationCodeValidator.new(
+        params[:code],
+        params[:client_id],
+        params[:redirect_uri],
+        params[:code_verifier]
+      ).validate
+
+      access_token = AccessTokenCreator.new(oauth_client, auth_code_data["user_id"]).create
+
+      render json: {
+        access_token: access_token.token,
+        token_type: "Bearer",
+        expires_in: access_token.expires_in
+      }
+    rescue ArgumentError => e
+      render json: { error: e.message }, status: :bad_request
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "User not found" }, status: :not_found
+    ensure
+      Redis.current.del("oauth_code:#{params[:code]}") if params[:code].present?
+    end
+
     private
-
-    def validate_authorization_request(params)
-      raise ArgumentError, "Missing client_id" if params[:client_id].blank?
-      raise ArgumentError, "Invalid client_id" if oauth_client(params[:client_id]).nil?
-      raise ArgumentError, "response_type must be code" if params[:response_type] != "code"
-      raise ArgumentError, "Missing redirect_uri" if params[:redirect_uri].blank?
-      raise ArgumentError, "Invalid redirect_uri" unless oauth_client(params[:client_id]).redirect_uri == params[:redirect_uri]
-      raise ArgumentError, "Missing user_id" if params[:user_id].blank?
-      raise ArgumentError, "Missing code_challenge" if params[:code_challenge].blank?
-      raise ArgumentError, "Missing code_challenge_method" if params[:code_challenge_method].blank?
-      raise ArgumentError, "Invalid code_challenge_method" unless params[:code_challenge_method] == "S256"
-    end
-
-    def oauth_client(client_id)
-      @oauth_client ||= {}
-      @oauth_client[client_id] ||= OauthClient.find_by(client_id:)
-    end
 
     def build_redirect_url(base_uri, params)
       uri = URI.parse(base_uri)

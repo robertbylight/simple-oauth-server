@@ -3,7 +3,8 @@ module Oauth
     skip_before_action :verify_authenticity_token
 
     def authorize
-      oauth_client = AuthorizationRequestValidator.new(params).validate
+      AuthorizationRequestValidator.new(params).validate
+      oauth_client = OauthClient.find_by(client_id: params[:client_id])
 
       current_user = User.find(params[:user_id])
       code = oauth_client.create_authorization_code!(
@@ -20,7 +21,7 @@ module Oauth
     end
 
     def token
-      oauth_client = TokenRequestValidator.new(params).validate
+      TokenRequestValidator.new(params).validate
 
       auth_code_data = AuthorizationCodeValidator.new(
         params[:code],
@@ -29,7 +30,15 @@ module Oauth
         params[:code_verifier]
       ).validate
 
-      access_token = AccessTokenCreator.new(oauth_client, auth_code_data["user_id"]).create
+      oauth_client = OauthClient.find_by(client_id: params[:client_id])
+      user = User.find(auth_code_data["user_id"])
+
+      access_token = AccessToken.create!(
+        token: AccessToken.generate_token,
+        oauth_client: oauth_client,
+        user: user,
+        expires_at: 1.hour.from_now
+      )
 
       render json: {
         access_token: access_token.token,

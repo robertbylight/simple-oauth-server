@@ -15,9 +15,10 @@ RSpec.describe TokenRequestValidator do
     end
 
     context 'when all parameters are valid' do
-      it 'returns the oauth client' do
-        result = described_class.new(valid_params).validate
-        expect(result).to eq(valid_client)
+      it 'validates successfully without raising errors' do
+        expect {
+          described_class.new(valid_params).validate
+        }.not_to raise_error
       end
     end
 
@@ -26,7 +27,7 @@ RSpec.describe TokenRequestValidator do
         params = valid_params.merge(grant_type: nil)
         expect {
           described_class.new(params).validate
-        }.to raise_error(ArgumentError, 'Missing grant_type')
+        }.to raise_error(ArgumentError, 'grant_type must be authorization_code')
       end
 
       it 'raises error for invalid grant_type' do

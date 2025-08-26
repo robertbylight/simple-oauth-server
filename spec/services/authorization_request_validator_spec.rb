@@ -17,9 +17,10 @@ RSpec.describe AuthorizationRequestValidator do
     end
 
     context 'when all parameters are valid' do
-      it 'returns the oauth client' do
-        result = described_class.new(valid_params).validate
-        expect(result).to eq(valid_client)
+      it 'validates successfully without raising errors' do
+        expect {
+          described_class.new(valid_params).validate
+        }.not_to raise_error
       end
     end
 

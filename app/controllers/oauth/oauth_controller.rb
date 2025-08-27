@@ -26,7 +26,6 @@ module Oauth
       auth_code_data = AuthorizationCodeValidator.new(
         params[:code],
         params[:client_id],
-        params[:redirect_uri],
         params[:code_verifier]
       ).validate
 

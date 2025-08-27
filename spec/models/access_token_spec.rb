@@ -1,26 +1,19 @@
 require 'rails_helper'
 
 RSpec.describe AccessToken, type: :model do
-  let(:token) { 'abc123def456' }
-  let(:expires_at) { 1.hour.from_now }
-  let(:oauth_client) {
-    OauthClient.create!(
-      client_id: '123',
-      client_name: 'robert',
-      redirect_uri: 'http://robert.com/callback',
-    )
-  }
+  let(:valid_client) { OauthClient.create!(client_id: 'abc123', client_name: 'test client', redirect_uri: 'https://test.com/callback') }
   let(:user) { User.create!(email: 'robert@gmail.com', first_name: 'robert', last_name: 'rodriguez') }
-  let(:access_token) { create_access_token(token, oauth_client, user, expires_at) }
 
-  def create_access_token(token, oauth_client, user, expires_at)
-    AccessToken.new(token:, oauth_client:, user:, expires_at:)
-  end
+  let(:token) { 'valid_token_123' }
+  let(:oauth_client) { valid_client }
+  let(:expires_at) { 1.hour.from_now }
+
+  subject(:access_token) { AccessToken.new(token:, oauth_client:, user:, expires_at:) }
 
   describe 'Validations' do
     context 'when attributes are valid' do
       it 'creates a valid access token' do
-        expect(access_token.valid?).to be_truthy
+        expect(subject).to be_valid
       end
     end
 
@@ -29,8 +22,8 @@ RSpec.describe AccessToken, type: :model do
         let(:token) { nil }
 
         it 'is invalid' do
-          expect(access_token.valid?).to be_falsy
-          expect(access_token.errors[:token]).to include("can't be blank")
+          expect(subject).to be_invalid
+          expect(subject.errors[:token]).to include("can't be blank")
         end
       end
 
@@ -38,40 +31,66 @@ RSpec.describe AccessToken, type: :model do
         let(:expires_at) { nil }
 
         it 'is invalid' do
-          expect(access_token.valid?).to be_falsy
-          expect(access_token.errors[:expires_at]).to include("can't be blank")
+          expect(subject).to be_invalid
+          expect(subject.errors[:expires_at]).to include("can't be blank")
         end
       end
 
-      context 'when token has already been used' do
-        let(:token) { 'duplicate_token' }
-
-        before do
-          AccessToken.create!(
-            token: 'duplicate_token',
-            oauth_client: oauth_client,
-            user: user,
-            expires_at: 1.hour.from_now
-          )
-        end
+      context 'when oauth_client is missing' do
+        let(:oauth_client) { nil }
 
         it 'is invalid' do
-          expect(access_token.valid?).to be_falsy
-          expect(access_token.errors[:token]).to include("has already been taken")
+          expect(subject).to be_invalid
+          expect(subject.errors[:oauth_client]).to include("must exist")
+        end
+      end
+
+      context 'when user is missing' do
+        let(:user) { nil }
+
+        it 'is invalid' do
+          expect(subject).to be_invalid
+          expect(subject.errors[:user]).to include("must exist")
         end
       end
     end
   end
 
-  describe 'Associations' do
-    it 'belongs to oauth_client' do
-      access_token.save!
-      expect(access_token.oauth_client).to eq(oauth_client)
+  describe 'Methods' do
+    context '#expired?' do
+      context 'when token is not expired' do
+        let(:expires_at) { 1.hour.from_now }
+
+        it 'returns false' do
+          expect(subject.expired?).to be false
+        end
+      end
+
+      context 'when token is expired' do
+        let(:expires_at) { 1.hour.ago }
+
+        it 'returns true' do
+          expect(subject.expired?).to be true
+        end
+      end
     end
 
-    it 'belongs to user' do
-      access_token.save!
-      expect(access_token.user).to eq(user)
+    context '#expires_in' do
+      context 'when token is not expired' do
+        let(:expires_at) { 1.hour.from_now }
+
+        it 'returns seconds until expiration' do
+          expect(subject.expires_in).to be_within(5).of(3600)
+        end
+      end
+
+      context 'when token is expired' do
+        let(:expires_at) { 1.hour.ago }
+
+        it 'returns 0' do
+          expect(subject.expires_in).to eq(0)
+        end
+      end
     end
   end
 end

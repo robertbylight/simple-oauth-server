@@ -29,7 +29,6 @@ class TokenRequestValidator
   end
 
   def validate_client_exists
-    client = OauthClient.find_by(client_id:)
-    raise ArgumentError, "Invalid client_id" unless client
+    raise ArgumentError, "Invalid client_id" unless OauthClient.find_by(client_id:)
   end
 end

@@ -1,10 +1,9 @@
 class AuthorizationCodeValidator
-  attr_reader :code, :client_id, :redirect_uri, :code_verifier, :auth_code_details
+  attr_reader :code, :client_id, :code_verifier, :auth_code_details
 
-  def initialize(code, client_id, redirect_uri, code_verifier)
+  def initialize(code, client_id, code_verifier)
     @code = code
     @client_id = client_id
-    @redirect_uri = redirect_uri
     @code_verifier = code_verifier
     @auth_code_details = nil
   end
@@ -12,7 +11,6 @@ class AuthorizationCodeValidator
   def validate
     fetch_auth_code
     validate_client_match
-    validate_redirect_uri_match
     validate_pkce
 
     auth_code_details
@@ -30,12 +28,6 @@ class AuthorizationCodeValidator
   def validate_client_match
     unless auth_code_details["client_id"] == client_id
       raise ArgumentError, "Invalid authorization code"
-    end
-  end
-
-  def validate_redirect_uri_match
-    unless auth_code_details["redirect_uri"] == redirect_uri
-      raise ArgumentError, "Invalid redirect_uri"
     end
   end
 

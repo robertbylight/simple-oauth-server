@@ -29,10 +29,7 @@ class AuthorizationRequestValidator
   def validate_client_exists_and_matches
     oauth_client = OauthClient.find_by(client_id:)
     raise ArgumentError, "Invalid client_id" unless oauth_client
-
-    unless oauth_client.redirect_uri == redirect_uri
-      raise ArgumentError, "Invalid redirect_uri"
-    end
+    raise ArgumentError, "Invalid redirect_uri"  unless oauth_client.redirect_uri == redirect_uri
   end
 
   def validate_response_type
@@ -44,9 +41,6 @@ class AuthorizationRequestValidator
   def validate_pkce_params
     raise ArgumentError, "Missing code_challenge" if code_challenge.blank?
     raise ArgumentError, "Missing code_challenge_method" if code_challenge_method.blank?
-
-    unless code_challenge_method == "S256"
-      raise ArgumentError, "Invalid code_challenge_method"
-    end
+    raise ArgumentError, "Invalid code_challenge_method" unless code_challenge_method == "S256"
   end
 end

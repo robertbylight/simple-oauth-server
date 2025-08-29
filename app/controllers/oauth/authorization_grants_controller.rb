@@ -4,10 +4,12 @@ module Oauth
 
     def new
       state_data = get_state_data(params[:state])
+      oauth_client = oauth_client(state_data["client_id"])
+      user_details = user(state_data["user_id"])
 
       consent_info = {
-        client_name: oauth_client(state_data["client_id"]).client_name,
-        user_name: "#{user(state_data["user_id"]).first_name} #{user(state_data["user_id"]).last_name}",
+        client_name: oauth_client.client_name,
+        user_name: "#{user_details.first_name} #{user_details.last_name}",
         requested_permissions: [ "First name", "Last name", "Access your email address" ],
         state: params[:state],
         decision_options: {

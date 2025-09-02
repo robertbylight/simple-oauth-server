@@ -6,7 +6,6 @@ RSpec.describe Oauth::UserInfoController, type: :request do
       client_id: '123',
       client_name: 'Rubber Toes',
       redirect_uri: 'https://www.robert.com/callback',
-      client_secret: 'safe'
     )
   }
 

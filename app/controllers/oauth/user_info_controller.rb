@@ -43,7 +43,7 @@ module Oauth
       raise ArgumentError, "Missing access token" if token.blank?
       access_token = AccessToken.find_by(token: token)
       raise ArgumentError, "Invalid access token" if access_token.nil?
-      raise ArgumentError, "Access token expired" if access_token.expired
+      raise ArgumentError, "Access token expired" if access_token.expired?
 
       access_token
     end

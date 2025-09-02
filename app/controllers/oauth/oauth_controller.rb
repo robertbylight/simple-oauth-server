@@ -24,7 +24,7 @@ module Oauth
         }
       }
 
-      render json: { consent_info: consent_info }
+      render json: { consent_info: }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
     rescue ActiveRecord::RecordNotFound

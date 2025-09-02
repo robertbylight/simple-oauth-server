@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_04_141212) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_20_155327) do
   create_table "access_tokens", force: :cascade do |t|
     t.string "token"
     t.integer "oauth_client_id", null: false
@@ -40,7 +40,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_04_141212) do
     t.string "redirect_uri", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "client_secret", null: false
     t.index ["client_id"], name: "index_oauth_clients_on_client_id", unique: true
   end
 

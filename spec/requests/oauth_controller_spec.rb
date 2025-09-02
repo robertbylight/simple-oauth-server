@@ -6,7 +6,6 @@ RSpec.describe Oauth::OauthController, type: :request do
       client_id: '123',
       client_name: 'Rubber Toes',
       redirect_uri: 'https://www.robert.com/callback',
-      client_secret: 'test_secret'
     )
   }
 
@@ -18,8 +17,22 @@ RSpec.describe Oauth::OauthController, type: :request do
     )
   }
 
-  def make_request(client_id: valid_client.client_id, response_type: 'code', redirect_uri: valid_client.redirect_uri, user_id: valid_user.id)
-    get oauth_authorize_path, params: { client_id: client_id, response_type: response_type, redirect_uri: redirect_uri, user_id: user_id }
+  def make_request(
+    client_id: valid_client.client_id,
+    response_type: 'code',
+    redirect_uri: valid_client.redirect_uri,
+    user_id: valid_user.id,
+    code_challenge: '6iEWvY6Bhyf7cFsAf84zjbeAHO0y0a4QyZqaddmMclw',
+    code_challenge_method: 'S256'
+  )
+    get oauth_authorize_path, params: {
+      client_id:,
+      response_type:,
+      redirect_uri:,
+      user_id:,
+      code_challenge:,
+      code_challenge_method:
+    }
   end
 
   describe 'GET /oauth/authorize' do
@@ -93,6 +106,36 @@ RSpec.describe Oauth::OauthController, type: :request do
           make_request(user_id: 777)
           expect(response).to have_http_status(:not_found)
         end
+      end
+
+      context 'when code_challenge is missing' do
+        let(:request_params) { { code_challenge: nil } }
+        let(:error_message) { 'Missing code_challenge' }
+        it_behaves_like 'an invalid request'
+      end
+
+      context 'when code_challenge is blank' do
+        let(:request_params) { { code_challenge: '' } }
+        let(:error_message) { 'Missing code_challenge' }
+        it_behaves_like 'an invalid request'
+      end
+
+      context 'when code_challenge_method is missing' do
+        let(:request_params) { { code_challenge_method: nil } }
+        let(:error_message) { 'Missing code_challenge_method' }
+        it_behaves_like 'an invalid request'
+      end
+
+      context 'when code_challenge_method is blank' do
+        let(:request_params) { { code_challenge_method: '' } }
+        let(:error_message) { 'Missing code_challenge_method' }
+        it_behaves_like 'an invalid request'
+      end
+
+      context 'when code_challenge_method is not S256' do
+        let(:request_params) { { code_challenge_method: 'plain' } }
+        let(:error_message) { 'Invalid code_challenge_method' }
+        it_behaves_like 'an invalid request'
       end
     end
   end

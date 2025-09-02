@@ -4,19 +4,14 @@ RSpec.describe OauthClient, type: :model do
   let(:client_id) { '123' }
   let(:client_name) { 'robert' }
   let(:redirect_uri) { 'http://robert.com/callback' }
-  let(:client_secret) { 'abc123' }
-  let(:oauth_client) { create_oauth_client(client_id, client_name, redirect_uri, client_secret) }
-
-  def create_oauth_client(client_id, client_name, redirect_uri, client_secret)
-    OauthClient.new(client_id:, client_name:, redirect_uri:, client_secret:)
-  end
+  let(:oauth_client) { OauthClient.new(client_id:, client_name:, redirect_uri:) }
 
   let(:user) { User.create!(email: 'robert@gmail.com', first_name: 'robert', last_name: 'rodriguez') }
 
   describe 'Validations' do
     context 'when attributes are valid' do
       it 'creates a valid oauth client' do
-        expect(oauth_client.valid?).to be_truthy
+        expect(oauth_client).to be_valid
       end
     end
 
@@ -25,7 +20,7 @@ RSpec.describe OauthClient, type: :model do
         let(:client_id) { nil }
 
         it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
+          expect(oauth_client).not_to be_valid
           expect(oauth_client.errors[:client_id]).to include("can't be blank")
         end
       end
@@ -34,7 +29,7 @@ RSpec.describe OauthClient, type: :model do
         let(:client_name) { nil }
 
         it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
+          expect(oauth_client).not_to be_valid
           expect(oauth_client.errors[:client_name]).to include("can't be blank")
         end
       end
@@ -43,17 +38,8 @@ RSpec.describe OauthClient, type: :model do
         let(:redirect_uri) { nil }
 
         it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
+          expect(oauth_client).not_to be_valid
           expect(oauth_client.errors[:redirect_uri]).to include("can't be blank")
-        end
-      end
-
-      context 'when client_secret is missing' do
-        let(:client_secret) { nil }
-
-        it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
-          expect(oauth_client.errors[:client_secret]).to include("can't be blank")
         end
       end
 
@@ -67,35 +53,54 @@ RSpec.describe OauthClient, type: :model do
             client_id: 'abc',
             client_name: 'obi wan systems',
             redirect_uri: 'http://obiwansys.com/callback',
-            client_secret: 'obiwan_secret'
           )
         end
+
         it 'is invalid' do
-          expect(oauth_client.valid?).to be_falsy
+          expect(oauth_client).not_to be_valid
           expect(oauth_client.errors[:client_id]).to include("has already been taken")
         end
       end
     end
   end
 
-  describe 'create_authorization_code' do
+  describe 'create_authorization_code!' do
     let(:client_name) { 'megacity' }
     let(:redirect_uri) { 'http://thematrix.com/callback' }
+    let(:code_challenge) { 'abc123' }
 
     it 'creates a valid authorization code' do
-      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user)
+      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user, code_challenge)
       # regex to match the pattern of the code(64 lowercase alphanumeric characters). does not compare the actual value itself.
       expect(code).to match(/\A[a-f0-9]{64}\z/)
     end
 
-    it 'stores code in Redis with correct client id, redirect uri, and user id' do
-      oauth_client.save!
-      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user)
+    it 'stores the authorization code data in Redis' do
+      code = oauth_client.create_authorization_code!(oauth_client.redirect_uri, user, code_challenge)
 
-      code_details = JSON.parse(Redis.current.get("oauth_code:#{code}"))
-      expect(code_details['client_id']).to eq(oauth_client.client_id)
-      expect(code_details['user_id']).to eq(user.id)
-      expect(code_details['redirect_uri']).to eq(oauth_client.redirect_uri)
+      redis_data = JSON.parse(Redis.current.get("oauth_code:#{code}"))
+
+      expect(redis_data['client_id']).to eq(oauth_client.client_id)
+      expect(redis_data['user_id']).to eq(user.id)
+      expect(redis_data['redirect_uri']).to eq(oauth_client.redirect_uri)
+      expect(redis_data['code_challenge']).to eq(code_challenge)
+      expect(redis_data['created_at']).to be_present
+    end
+
+    it 'authorizes the user for the client if not already authorized' do
+      expect(user.is_client_authorized(oauth_client)).to be false
+
+      oauth_client.create_authorization_code!(oauth_client.redirect_uri, user, code_challenge)
+
+      expect(user.is_client_authorized(oauth_client)).to be true
+    end
+
+    it 'does not create multiple authorizations if user is already authorized' do
+      user.give_authorization_to_client(oauth_client)
+
+      expect {
+        oauth_client.create_authorization_code!(oauth_client.redirect_uri, user, code_challenge)
+      }.not_to change(OauthAuthorization, :count)
     end
   end
 end

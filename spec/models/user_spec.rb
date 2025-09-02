@@ -4,18 +4,14 @@ RSpec.describe User, type: :model do
   let(:email) { 'robert@example.com' }
   let(:first_name) { 'robert' }
   let(:last_name) { 'rodriguez' }
-  let(:user) { create_user(email, first_name, last_name) }
-
-  def create_user(email, first_name, last_name)
-    User.new(email:, first_name:, last_name:)
-  end
+  let(:user) { User.new(email:, first_name:, last_name:) }
 
   let(:oauth_client) { OauthClient.create!(client_id: '123', client_name: 'Test App', redirect_uri: 'https://example.com/callback') }
 
   describe 'Validations' do
     context 'when attributes are valid' do
       it 'creates a valid user' do
-        expect(user.valid?).to be_truthy
+        expect(user).to be_valid
       end
     end
 
@@ -24,7 +20,7 @@ RSpec.describe User, type: :model do
         let(:email) { nil }
 
         it 'is invalid' do
-          expect(user.valid?).to be_falsy
+          expect(user).not_to be_valid
           expect(user.errors[:email]).to include("can't be blank")
         end
       end
@@ -33,7 +29,7 @@ RSpec.describe User, type: :model do
         let(:first_name) { nil }
 
         it 'is invalid' do
-          expect(user.valid?).to be_falsy
+          expect(user).not_to be_valid
           expect(user.errors[:first_name]).to include("can't be blank")
         end
       end
@@ -42,7 +38,7 @@ RSpec.describe User, type: :model do
         let(:last_name) { nil }
 
         it 'is invalid' do
-          expect(user.valid?).to be_falsy
+          expect(user).not_to be_valid
           expect(user.errors[:last_name]).to include("can't be blank")
         end
       end
@@ -51,7 +47,7 @@ RSpec.describe User, type: :model do
         let(:email) { 'invalid-email' }
 
         it 'is invalid' do
-          expect(user.valid?).to be_falsy
+          expect(user).not_to be_valid
           expect(user.errors[:email]).to include("is invalid")
         end
       end
@@ -63,7 +59,7 @@ RSpec.describe User, type: :model do
           User.create!(email: 'duplicate@example.com', first_name: 'robert', last_name: 'rodriguez')
         end
         it 'is invalid' do
-          expect(user.valid?).to be_falsy
+          expect(user).not_to be_valid
           expect(user.errors[:email]).to include("has already been taken")
         end
       end
@@ -71,38 +67,36 @@ RSpec.describe User, type: :model do
   end
 
   describe 'is_client_authorized' do
-    let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
+    let(:user) { User.create!(email:, first_name:, last_name:) }
     let(:oauth_client) {
       OauthClient.create!(
         client_id: '123',
         client_name: 'Test App',
         redirect_uri: 'https://example.com/callback',
-        client_secret: 'test_secret'
       )
     }
 
     context 'when user has authorized the client' do
       it 'returns true' do
         user.give_authorization_to_client(oauth_client)
-        expect(user.is_client_authorized(oauth_client)).to be_truthy
+        expect(user.is_client_authorized(oauth_client)).to be true
       end
     end
 
     context 'when user has not authorized the client' do
       it 'returns false' do
-        expect(user.is_client_authorized(oauth_client)).to be_falsy
+        expect(user.is_client_authorized(oauth_client)).to be false
       end
     end
   end
 
   describe 'give_authorization_to_client' do
-    let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
+    let(:user) { User.create!(email:, first_name:, last_name:) }
     let(:oauth_client) {
       OauthClient.create!(
         client_id: '123',
         client_name: 'Test App',
         redirect_uri: 'https://example.com/callback',
-        client_secret: 'test_secret'
       )
     }
 
@@ -134,23 +128,9 @@ RSpec.describe User, type: :model do
   end
 
   describe 'associations' do
-    let(:user) { User.create!(email: 'robert@example.com', first_name: 'robert', last_name: 'rodriguez') }
-    let(:oauth_client1) {
-      OauthClient.create!(
-        client_id: '123',
-        client_name: 'App 1',
-        redirect_uri: 'https://app1.com/callback',
-        client_secret: 'test_secret_1'
-      )
-    }
-    let(:oauth_client2) {
-      OauthClient.create!(
-        client_id: '456',
-        client_name: 'App 2',
-        redirect_uri: 'https://app2.com/callback',
-        client_secret: 'test_secret_2'
-      )
-    }
+    let(:user) { User.create!(email:, first_name:, last_name:) }
+    let(:oauth_client1) { OauthClient.create!(client_id: '123', client_name: 'Client 1', redirect_uri: 'https://client1.com/callback') }
+    let(:oauth_client2) { OauthClient.create!(client_id: '456', client_name: 'Client 2', redirect_uri: 'https://client2.com/callback') }
 
     before do
       user.give_authorization_to_client(oauth_client1)

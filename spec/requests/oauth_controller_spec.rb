@@ -171,7 +171,7 @@ RSpec.describe Oauth::OauthController, type: :request do
 
     def make_consent_request(state: valid_state_token, decision: 'allow')
       post "/oauth/consent",
-           params: { state: state, decision: decision }.to_json,
+           params: { state:, decision: }.to_json,
            headers: { 'Content-Type' => 'application/json' }
     end
 

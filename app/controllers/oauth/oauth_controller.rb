@@ -20,7 +20,7 @@ module Oauth
         params[:code_challenge]
       )
 
-      redirect_url = "#{request.base_url}/oauth/authorization-grants/new?state=#{state_token}"
+      redirect_url = build_redirect_url(params[:redirect_uri], { code: })
       render json: { redirect_url: }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request

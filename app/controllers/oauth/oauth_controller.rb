@@ -49,10 +49,8 @@ module Oauth
 
       code = create_authorization_code_with_pkce(oauth_client, current_user, state_data)
 
-      Redis.current.del("oauth_state:#{params[:state]}")
-
-      redirect_url = build_redirect_url(state_data["redirect_uri"], { code: code })
-      render json: { redirect_url: redirect_url }
+      redirect_url = build_redirect_url(state_data["redirect_uri"], { code: })
+      render json: { redirect_url: }
     rescue ArgumentError => e
       render json: { error: e.message }, status: :bad_request
     rescue ActiveRecord::RecordNotFound
@@ -116,6 +114,8 @@ module Oauth
       raise ArgumentError, "Invalid or expired state token" unless state_json
 
       JSON.parse(state_json)
+    ensure
+      Redis.current.del("oauth_state:#{state_token}") if state_token.present?
     end
 
     def create_authorization_code_with_pkce(oauth_client, user, state_data)

@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     get "authorize", to: "oauth#authorize"
     post "consent", to: "oauth#consent"
     post "token", to: "oauth#token"
+    get "userinfo", to: "user_info#show"
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

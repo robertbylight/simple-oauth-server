@@ -25,6 +25,7 @@ RSpec.describe Oauth::UserInfoController, type: :request do
       expires_at: 1.hour.from_now
     )
   }
+
   let(:expired_access_token) {
     AccessToken.create!(
       token: "exp123",
@@ -41,23 +42,24 @@ RSpec.describe Oauth::UserInfoController, type: :request do
   end
 
   describe 'GET /oauth/userinfo' do
-    shared_examples 'an unauthorized request' do
+    shared_examples 'an unauthorized request' do |error_message|
       it 'returns an :unauthorized status' do
-        make_request(**request_params)
+        subject
         expect(response).to have_http_status(:unauthorized)
       end
 
       it 'returns a JSON response with the error message' do
-        make_request(**request_params)
+        subject
         expect(JSON.parse(response.body)['error']).to eq(error_message)
       end
     end
 
     context 'when request is valid' do
-      it 'returns user info with required fields' do
-        make_request
-        expect(response).to have_http_status(200)
+      subject { make_request }
 
+      it 'returns user info with required fields' do
+        subject
+        expect(response).to have_http_status(200)
         json = JSON.parse(response.body)
         expect(json).to have_key('sub')
         expect(json).to have_key('first_name')
@@ -66,9 +68,8 @@ RSpec.describe Oauth::UserInfoController, type: :request do
       end
 
       it 'returns correct user data' do
-        make_request
+        subject
         json = JSON.parse(response.body)
-
         expect(json['sub']).to eq(valid_user.id.to_s)
         expect(json['first_name']).to eq(valid_user.first_name)
         expect(json['last_name']).to eq(valid_user.last_name)
@@ -76,46 +77,40 @@ RSpec.describe Oauth::UserInfoController, type: :request do
       end
 
       it 'sets correct content type' do
-        make_request
+        subject
         expect(response.content_type).to include('application/json')
       end
     end
 
     context 'when request is invalid' do
       context 'when Authorization header is missing' do
-        let(:request_params) { { token: nil } }
-        let(:error_message) { 'Missing authorization header' }
-        it_behaves_like 'an unauthorized request'
+        subject { make_request(token: nil) }
+        it_behaves_like 'an unauthorized request', 'Missing authorization header'
       end
 
       context 'when Authorization header does not use Bearer scheme' do
-        it 'returns unauthorized with proper error message' do
-          get oauth_userinfo_path, headers: { 'Authorization' => 'Basic invalid_scheme' }
-          expect(response).to have_http_status(:unauthorized)
-          expect(JSON.parse(response.body)['error']).to eq('Invalid authorization header')
-        end
+        subject { get oauth_userinfo_path, headers: { 'Authorization' => 'Basic invalid_scheme' } }
+        it_behaves_like 'an unauthorized request', 'Invalid authorization header'
       end
 
-      context 'when Authorization header is incorrect' do
-        it 'returns unauthorized when missing Bearer prefix' do
-          get oauth_userinfo_path, headers: { 'Authorization' => 'abc123' }
-          expect(response).to have_http_status(:unauthorized)
-          expect(JSON.parse(response.body)['error']).to eq('Invalid authorization header')
-        end
+      context 'when Authorization header is missing Bearer prefix' do
+        subject { get oauth_userinfo_path, headers: { 'Authorization' => 'abc123' } }
+        it_behaves_like 'an unauthorized request', 'Invalid authorization header'
       end
 
-      context 'when access token is missing' do
-        it 'returns unauthorized when token is empty after Bearer' do
-          get oauth_userinfo_path, headers: { 'Authorization' => 'Bearer ' }
-          expect(response).to have_http_status(:unauthorized)
-          expect(JSON.parse(response.body)['error']).to eq('Missing access token')
-        end
+      context 'when access token is missing after Bearer' do
+        subject { get oauth_userinfo_path, headers: { 'Authorization' => 'Bearer ' } }
+        it_behaves_like 'an unauthorized request', 'Missing access token'
       end
 
       context 'when access token is invalid' do
-        let(:request_params) { { token: 'invalid_token_123' } }
-        let(:error_message) { 'Invalid access token' }
-        it_behaves_like 'an unauthorized request'
+        subject { make_request(token: 'invalid_token_123') }
+        it_behaves_like 'an unauthorized request', 'Invalid access token'
+      end
+
+      context 'when access token is expired' do
+        subject { make_request(token: expired_access_token.token) }
+        it_behaves_like 'an unauthorized request', 'Access token expired'
       end
     end
   end
